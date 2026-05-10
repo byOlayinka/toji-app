@@ -1,53 +1,26 @@
 name: Toji Daily Reminder
 
-# ─────────────────────────────────────────────────────────────
-# Runs Mon–Fri at 6:00 AM UTC = 7:00 AM Lagos (WAT, UTC+1)
-# Change the time by editing the "0 6" below:
-#   "0 5" = 6am Lagos  |  "0 7" = 8am Lagos  |  "0 8" = 9am Lagos
-# ─────────────────────────────────────────────────────────────
-
 on:
   schedule:
-    - cron: '0 6 * * 1-5'   # Mon–Fri, 6am UTC (7am Lagos)
-
-  # Lets you test it manually from the Actions tab
+    - cron: '0 6 * * 1-5'
   workflow_dispatch:
 
 jobs:
   remind:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Determine day type and send reminder
+      - name: Send Toji reminder
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # 1 = Monday, 3 = Wednesday, 5 = Friday → strength
-          # 2 = Tuesday, 4 = Thursday → cardio
           DAY=$(date +%u)
-
           if [ "$DAY" -eq 1 ] || [ "$DAY" -eq 3 ] || [ "$DAY" -eq 5 ]; then
-            EMOJI="💪"
-            TITLE="Strength day"
-            BODY="Your kettlebell circuit is waiting. 3 rounds. Leave two reps in the tank."
-            CTA="Open Toji → Train → Start Workout"
+            MSG="💪 Strength day — Your kettlebell circuit is waiting. 3 rounds. Leave two reps in the tank. Open the Toji app and start your session."
           else
-            EMOJI="🚶"
-            TITLE="Cardio day"
-            BODY="Walking pad: 20–30 min, incline 3–5%. Stay lean, stay dangerous."
-            CTA="Open Toji → Log → Save cardio"
+            MSG="🚶 Cardio day — Walking pad: 20-30 min, incline 3-5%. Stay lean, stay dangerous. Log it in the Toji app."
           fi
-
-          MESSAGE="${EMOJI} *${TITLE}*
-${BODY}
-
-_${CTA}_"
-
           curl -s -X POST \
             "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=${MESSAGE}" \
-            -d "parse_mode=Markdown"
-
-          echo "Reminder sent for day ${DAY} (${TITLE})"
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MSG}"
